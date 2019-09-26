@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 )
 
 var (
@@ -26,6 +27,7 @@ func TestSamplePrimitives(t *testing.T) {
 	testBool := true
 	testFloat32 := float32(-5432.1)
 	testFloat64 := float64(-65432.1)
+	testTime := time.Now()
 
 	for label, tCase := range map[string]struct {
 		in   interface{}
@@ -114,6 +116,14 @@ func TestSamplePrimitives(t *testing.T) {
 		"byte slice": {
 			in:   []byte{1, 2, 3, 4},
 			want: Bytes,
+		},
+		"time": {
+			in:   testTime,
+			want: Time,
+		},
+		"*time": {
+			in:   &testTime,
+			want: Time,
 		},
 	} {
 		out := Sample(tCase.in)

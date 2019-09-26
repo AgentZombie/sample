@@ -3,6 +3,7 @@ package sample
 import (
 	"reflect"
 	"strings"
+	"time"
 )
 
 const (
@@ -12,6 +13,11 @@ const (
 	String = "Foo"
 	Bool   = true
 	Bytes  = "Zm9vIGJhciBiYXNlCg=="
+	Time   = "2009-11-10T23:00:00Z"
+)
+
+var (
+	typeTime = reflect.TypeOf(time.Time{})
 )
 
 func Sample(v interface{}) interface{} {
@@ -22,6 +28,9 @@ func Sample(v interface{}) interface{} {
 		k = t.Kind()
 	}
 	var out interface{}
+	if t == typeTime {
+		return Time
+	}
 	switch k {
 	case reflect.Interface:
 		out = nil
