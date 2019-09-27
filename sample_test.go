@@ -3,6 +3,7 @@ package sample
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -27,7 +28,6 @@ func TestSamplePrimitives(t *testing.T) {
 	testBool := true
 	testFloat32 := float32(-5432.1)
 	testFloat64 := float64(-65432.1)
-	testTime := time.Now()
 
 	for label, tCase := range map[string]struct {
 		in   interface{}
@@ -117,6 +117,41 @@ func TestSamplePrimitives(t *testing.T) {
 			in:   []byte{1, 2, 3, 4},
 			want: Bytes,
 		},
+	} {
+		out := Sample(tCase.in, nil)
+		t.Logf("%s: %T, %v\n", label, out, out)
+		got := fmt.Sprint(out)
+		if got != tCase.want {
+			t.Fatalf("got %q, want %q", got, tCase.want)
+		}
+	}
+}
+
+func TestCustom(t *testing.T) {
+	t.Parallel()
+
+	wantStr := "OTHER STRING"
+
+	custom := map[reflect.Type]interface{}{
+		reflect.TypeOf(time.Time{}): Time,
+		reflect.TypeOf(""):          wantStr,
+	}
+
+	testStr := "bar"
+	testTime := time.Now()
+
+	for label, tCase := range map[string]struct {
+		in   interface{}
+		want string
+	}{
+		"string": {
+			in:   testStr,
+			want: wantStr,
+		},
+		"*string": {
+			in:   &testStr,
+			want: wantStr,
+		},
 		"time": {
 			in:   testTime,
 			want: Time,
@@ -126,7 +161,7 @@ func TestSamplePrimitives(t *testing.T) {
 			want: Time,
 		},
 	} {
-		out := Sample(tCase.in)
+		out := Sample(tCase.in, custom)
 		t.Logf("%s: %T, %v\n", label, out, out)
 		got := fmt.Sprint(out)
 		if got != tCase.want {
@@ -141,7 +176,7 @@ func TestStruct(t *testing.T) {
 	t.Parallel()
 
 	f := Foo{}
-	out := Sample(f)
+	out := Sample(f, nil)
 
 	b, err := json.Marshal(out)
 	if err != nil {

@@ -3,7 +3,6 @@ package sample
 import (
 	"reflect"
 	"strings"
-	"time"
 )
 
 const (
@@ -16,11 +15,10 @@ const (
 	Time   = "2009-11-10T23:00:00Z"
 )
 
-var (
-	typeTime = reflect.TypeOf(time.Time{})
-)
-
-func Sample(v interface{}) interface{} {
+func Sample(v interface{}, custom map[reflect.Type]interface{}) interface{} {
+	if custom == nil {
+		custom = map[reflect.Type]interface{}{}
+	}
 	t := reflect.TypeOf(v)
 	k := t.Kind()
 	for k == reflect.Ptr {
@@ -28,8 +26,8 @@ func Sample(v interface{}) interface{} {
 		k = t.Kind()
 	}
 	var out interface{}
-	if t == typeTime {
-		return Time
+	if out, present := custom[t]; present {
+		return out
 	}
 	switch k {
 	case reflect.Interface:
@@ -63,7 +61,7 @@ func Sample(v interface{}) interface{} {
 	case reflect.Float64:
 		out = Float
 	case reflect.Struct:
-		out = sampleStructPtr(reflect.New(t).Interface())
+		out = sampleStructPtr(reflect.New(t).Interface(), custom)
 	case reflect.Array:
 		fallthrough
 	case reflect.Slice:
@@ -71,12 +69,12 @@ func Sample(v interface{}) interface{} {
 		if elem.Kind() == reflect.Uint8 {
 			return Bytes
 		}
-		out = []interface{}{Sample(reflect.New(elem).Interface())}
+		out = []interface{}{Sample(reflect.New(elem).Interface(), custom)}
 	}
 	return out
 }
 
-func sampleStructPtr(v interface{}) map[string]interface{} {
+func sampleStructPtr(v interface{}, custom map[reflect.Type]interface{}) map[string]interface{} {
 	t := reflect.TypeOf(v).Elem()
 	numFields := t.NumField()
 	out := make(map[string]interface{}, numFields-1)
@@ -100,7 +98,7 @@ func sampleStructPtr(v interface{}) map[string]interface{} {
 		if name == "" {
 			name = sf.Name
 		}
-		out[name] = Sample(reflect.New(sf.Type).Interface())
+		out[name] = Sample(reflect.New(sf.Type).Interface(), custom)
 	}
 	return out
 }
